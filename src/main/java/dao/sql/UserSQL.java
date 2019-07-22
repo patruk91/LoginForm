@@ -1,4 +1,11 @@
 package dao.sql;
 
-public class UserSQL {
+import dao.IUserDao;
+
+public class UserSQL implements IUserDao {
+    private ConnectionPool connectionPool;
+
+    public UserSQL(ConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
+    }
 }
