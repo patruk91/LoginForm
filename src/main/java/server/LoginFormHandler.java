@@ -3,6 +3,7 @@ package server;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import dao.ILoginDataDao;
+import model.User;
 
 import java.io.*;
 import java.net.HttpCookie;
@@ -76,6 +77,7 @@ public class LoginFormHandler implements HttpHandler {
         String response;
         if (loginData.checkIfPasswordIsCorrect(login, password)) {
             //createSessionForUserOrCookie?
+            User user = loginData.getUserByLogin(login);
             response = "<html><body>\n" +
                     "<p>Hello "+ user.getName() +" </p>" +
                     createLogoutButton() +

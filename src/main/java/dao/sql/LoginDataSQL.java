@@ -1,6 +1,7 @@
 package dao.sql;
 
 import dao.ILoginDataDao;
+import model.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -64,12 +65,48 @@ public class LoginDataSQL implements ILoginDataDao {
 
         return check;
     }
+
     private boolean checkPassword(Connection connection, String login, String password) throws SQLException {
         try(PreparedStatement stmt = connection.prepareStatement(
                 "SELECT exists(SELECT 'exists' FROM usercredentials WHERE login = ? AND hashed_password = ?) AS result")) {
             stmt.setString(1, login);
             stmt.setString(2, password);
             return isExists(stmt);
+        }
+    }
+
+    @Override
+    public User getUserByLogin(String login) {
+        try {
+            Connection connection = connectionPool.getConnection();
+            User user = getSingleUser(connection, login);
+            connectionPool.releaseConnection(connection);
+            return user;
+        } catch (SQLException e) {
+            System.err.println("SQLException: " + e.getMessage()
+                    + "\nSQLState: " + e.getSQLState()
+                    + "\nVendorError: " + e.getErrorCode());
+        }
+        throw new RuntimeException("No user by that login");
+    }
+
+    private User getSingleUser(Connection connection, String login) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "SELECT * FROM usercredentials")) {
+            return getSingleUserData(stmt);
+        }
+    }
+
+    private User getSingleUserData(PreparedStatement stmt) throws SQLException {
+        User user = null;
+        try (ResultSet resultSet = stmt.executeQuery()) {
+            while (resultSet.next()) {
+                String name = resultSet.getString("login");
+                String password = resultSet.getString("hashed_password");
+                int id = resultSet.getInt("id");
+                user = new User(id, name, password);
+            }
+            return user;
         }
     }
 }
