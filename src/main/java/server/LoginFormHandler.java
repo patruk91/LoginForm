@@ -107,7 +107,6 @@ public class LoginFormHandler implements HttpHandler {
         exchange.getResponseHeaders().add("Set-Cookie", cookie.toString());
         int userId = loginData.getUserByLogin(login).getId();
         sessionDao.insertSessionData(uuid.toString(), userId);
-
     }
 
 

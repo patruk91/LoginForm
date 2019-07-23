@@ -38,4 +38,27 @@ public class SessionSQL implements ISessionDao {
         stmtInsertUserSessionData.setInt(2, userId);
         stmtInsertUserSessionData.executeUpdate();
     }
+
+    @Override
+    public void deleteSessionData(String session) {
+        try {
+            Connection connection = connectionPool.getConnection();
+            deleteUserSessionFromDatabase(connection, session);
+            connectionPool.releaseConnection(connection);
+        } catch (SQLException e) {
+            System.err.println("SQLException: " + e.getMessage()
+                    + "\nSQLState: " + e.getSQLState()
+                    + "\nVendorError: " + e.getErrorCode());
+        }
+    }
+
+    private void deleteUserSessionFromDatabase(Connection connection, String session) throws SQLException {
+        try (PreparedStatement stmtInsertUserSessionData = connection.prepareStatement(
+                "DELETE FROM sessions WHERE session = ?")) {
+            stmtInsertUserSessionData.setString(1, session);
+            stmtInsertUserSessionData.executeUpdate();
+        }
+    }
+
+
 }
