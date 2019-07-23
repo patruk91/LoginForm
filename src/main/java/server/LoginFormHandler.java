@@ -3,6 +3,7 @@ package server;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import dao.ILoginDataDao;
+import dao.ISessionDao;
 import helper.PasswordHasher;
 import model.User;
 
@@ -12,12 +13,15 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class LoginFormHandler implements HttpHandler {
     private ILoginDataDao loginData;
+    private ISessionDao sessionDao;
 
-    public LoginFormHandler(ILoginDataDao loginData) {
+    public LoginFormHandler(ILoginDataDao loginData, ISessionDao sessionDao) {
         this.loginData = loginData;
+        this.sessionDao = sessionDao;
     }
 
     @Override
@@ -57,14 +61,15 @@ public class LoginFormHandler implements HttpHandler {
             Map<String, String> inputs = parseFormData(formData);
             String login = inputs.get("login");
             String password = inputs.get("password");
-            response = checkUserCredentials(login, password, response);
+            response = checkUserCredentials(login, password, exchange);
         }
         return response;
     }
 
-    private String checkUserCredentials(String login, String password, String response) {
+    private String checkUserCredentials(String login, String password, HttpExchange exchange) {
+        String response = "";
         if (loginData.checkIfLoginIsCorrect(login)) {
-            response = getResponseIfPasswordIsCorrect(login, password, response);
+            response = getResponseIfPasswordIsCorrect(login, password, exchange);
         } else {
             response = "<html><body>\n" +
                     "    <p>Sign in</p>\n" +
@@ -74,14 +79,13 @@ public class LoginFormHandler implements HttpHandler {
         return response;
     }
 
-    private String getResponseIfPasswordIsCorrect(String login, String password, String response) {
+    private String getResponseIfPasswordIsCorrect(String login, String password, HttpExchange exchange) {
+        String response = "";
         String salt = loginData.getSaltByLogin(login);
         PasswordHasher passwordHasher = new PasswordHasher();
         String hashedPassword = passwordHasher.hashPassword(salt + password);
-        System.out.println(salt);
-        System.out.println(hashedPassword);
         if (loginData.checkIfPasswordIsCorrect(login, hashedPassword)) {
-            //createSessionForUserOrCookie?
+            createSessionForUser(exchange, login);
             User user = loginData.getUserByLogin(login);
             response = "<html><body>\n" +
                     "<p>Hello "+ user.getName() +" </p>" +
@@ -93,7 +97,17 @@ public class LoginFormHandler implements HttpHandler {
                     createLoginForm() +
                     "</body></html>";
         }
+
         return response;
+    }
+
+    private void createSessionForUser(HttpExchange exchange, String login) {
+        UUID uuid = UUID.randomUUID();
+        HttpCookie cookie = new HttpCookie("sessionId", String.valueOf(uuid));
+        exchange.getResponseHeaders().add("Set-Cookie", cookie.toString());
+        int userId = loginData.getUserByLogin(login).getId();
+        sessionDao.insertSessionData(uuid.toString(), userId);
+
     }
 
 
@@ -119,7 +133,7 @@ public class LoginFormHandler implements HttpHandler {
     }
 
     private String createLogoutButton() {
-        return  "<form method=\"POST\">\n" +
+        return  "<form action=\"login\" method=\"GET\">\n" +
                 "    <input type=\"submit\" value=\"Logout\">\n" +
                 "</form>";
     }
