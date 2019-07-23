@@ -1,10 +1,9 @@
 package server;
 
 import com.sun.net.httpserver.HttpServer;
-import dao.IUserDao;
+import dao.ILoginDataDao;
 import dao.sql.ConnectionPool;
-import dao.sql.IConnectionPool;
-import dao.sql.UserSQL;
+import dao.sql.LoginDataSQL;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -18,7 +17,7 @@ public class ServerLoginForm {
 
     public void startServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
-        IUserDao userDao = new UserSQL(connectionPool);
+        ILoginDataDao userDao = new LoginDataSQL(connectionPool);
 
         server.createContext("/", new LoginFormHandler(userDao));
         server.setExecutor(null);

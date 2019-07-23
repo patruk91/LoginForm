@@ -1,4 +1,7 @@
 package dao;
 
-public interface IUserDao {
+public interface ILoginDataDao {
+    boolean checkIfLoginIsCorrect();
+
+    boolean checkIfPasswordIsCorrect();
 }
