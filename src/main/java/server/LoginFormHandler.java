@@ -61,8 +61,8 @@ public class LoginFormHandler implements HttpHandler {
     }
 
     private String checkUserCredentials(String login, String password, String response) {
-        if (loginData.checkIfLoginIsCorrect()) {
-            response = getResponseIfPasswordIsCorrect();
+        if (loginData.checkIfLoginIsCorrect(login)) {
+            response = getResponseIfPasswordIsCorrect(login, password);
         } else {
             response = "<html><body>\n" +
                     "    <p>Sign in</p>\n" +
@@ -72,12 +72,12 @@ public class LoginFormHandler implements HttpHandler {
         return response;
     }
 
-    private String getResponseIfPasswordIsCorrect() {
+    private String getResponseIfPasswordIsCorrect(String login, String password) {
         String response;
-        if (loginData.checkIfPasswordIsCorrect()) {
+        if (loginData.checkIfPasswordIsCorrect(login, password)) {
             //createSessionForUserOrCookie?
             response = "<html><body>\n" +
-                    "    <p>Incorrect password!</p>\n" +
+                    "<p>Hello "+ user.getName() +" </p>" +
                     createLogoutButton() +
                     "</body></html>";
         } else {

@@ -1,7 +1,9 @@
 package dao;
 
-public interface ILoginDataDao {
-    boolean checkIfLoginIsCorrect();
+import model.User;
 
-    boolean checkIfPasswordIsCorrect();
+public interface ILoginDataDao {
+    boolean checkIfLoginIsCorrect(String login);
+    boolean checkIfPasswordIsCorrect(String login, String password);
+    User getUserByLogin(String login);
 }

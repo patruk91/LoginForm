@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 public class Controller {
-    private final String URL = "jdbc:postgresql://localhost:5432/guestbook";
+    private final String URL = "jdbc:postgresql://localhost:5432/loginform";
     private final String USER = "pl";
     private final String PASSWORD = "postgres";
 
