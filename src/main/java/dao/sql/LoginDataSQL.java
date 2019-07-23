@@ -109,4 +109,39 @@ public class LoginDataSQL implements ILoginDataDao {
             return user;
         }
     }
+
+
+    @Override
+    public String getSaltByLogin(String login) {
+        String salt = "";
+        try {
+            Connection connection = connectionPool.getConnection();
+            salt = getSalt(connection, login, salt);
+            connectionPool.releaseConnection(connection);
+        } catch (SQLException e) {
+            System.err.println("SQLException: " + e.getMessage()
+                    + "\nSQLState: " + e.getSQLState()
+                    + "\nVendorError: " + e.getErrorCode());
+        }
+        return salt;
+    }
+
+    private String getSalt(Connection connection, String login, String salt) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "SELECT salt FROM usercredentials WHERE login = ?")) {
+            stmt.setString(1, login);
+            return getSaltFromDatabase(stmt, salt);
+        }
+    }
+
+    private String getSaltFromDatabase(PreparedStatement stmt, String salt) throws SQLException {
+        try (ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                salt = rs.getString("salt");
+            }
+        }
+        return salt;
+    }
+
+
 }

@@ -3,6 +3,7 @@ package server;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import dao.ILoginDataDao;
+import helper.PasswordHasher;
 import model.User;
 
 import java.io.*;
@@ -63,7 +64,7 @@ public class LoginFormHandler implements HttpHandler {
 
     private String checkUserCredentials(String login, String password, String response) {
         if (loginData.checkIfLoginIsCorrect(login)) {
-            response = getResponseIfPasswordIsCorrect(login, password);
+            response = getResponseIfPasswordIsCorrect(login, password, response);
         } else {
             response = "<html><body>\n" +
                     "    <p>Sign in</p>\n" +
@@ -73,9 +74,13 @@ public class LoginFormHandler implements HttpHandler {
         return response;
     }
 
-    private String getResponseIfPasswordIsCorrect(String login, String password) {
-        String response;
-        if (loginData.checkIfPasswordIsCorrect(login, password)) {
+    private String getResponseIfPasswordIsCorrect(String login, String password, String response) {
+        String salt = loginData.getSaltByLogin(login);
+        PasswordHasher passwordHasher = new PasswordHasher();
+        String hashedPassword = passwordHasher.hashPassword(salt + password);
+        System.out.println(salt);
+        System.out.println(hashedPassword);
+        if (loginData.checkIfPasswordIsCorrect(login, hashedPassword)) {
             //createSessionForUserOrCookie?
             User user = loginData.getUserByLogin(login);
             response = "<html><body>\n" +
