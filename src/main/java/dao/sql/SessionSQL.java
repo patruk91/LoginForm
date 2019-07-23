@@ -4,6 +4,7 @@ import dao.ISessionDao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class SessionSQL implements ISessionDao {
@@ -58,6 +59,40 @@ public class SessionSQL implements ISessionDao {
             stmtInsertUserSessionData.setString(1, session);
             stmtInsertUserSessionData.executeUpdate();
         }
+    }
+
+
+    @Override
+    public boolean isCurrentSession(String session) {
+        boolean exists = false;
+        try {
+            Connection connection = connectionPool.getConnection();
+            exists = checkIfSessionExists(connection, session);
+            connectionPool.releaseConnection(connection);
+        } catch (SQLException e) {
+            System.err.println("SQLException: " + e.getMessage()
+                    + "\nSQLState: " + e.getSQLState()
+                    + "\nVendorError: " + e.getErrorCode());
+        }
+        return exists;
+    }
+
+    private boolean checkIfSessionExists(Connection connection, String session) throws SQLException {
+        try(PreparedStatement stmt = connection.prepareStatement(
+                "SELECT exists(SELECT 'exists' FROM sessions WHERE session = ?) AS result")) {
+            stmt.setString(1, session);
+            return isExists(stmt);
+        }
+    }
+
+    private boolean isExists(PreparedStatement stmt) throws SQLException {
+        boolean result = false;
+        try (ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                result = rs.getBoolean("result");
+            }
+        }
+        return result;
     }
 
 
