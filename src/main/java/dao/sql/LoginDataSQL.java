@@ -92,7 +92,8 @@ public class LoginDataSQL implements ILoginDataDao {
 
     private User getSingleUser(Connection connection, String login) throws SQLException {
         try (PreparedStatement stmt = connection.prepareStatement(
-                "SELECT * FROM usercredentials")) {
+                "SELECT * FROM usercredentials WHERE login = ?")) {
+            stmt.setString(1, login);
             return getSingleUserData(stmt);
         }
     }
