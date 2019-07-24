@@ -95,5 +95,35 @@ public class SessionSQL implements ISessionDao {
         return result;
     }
 
+    @Override
+    public int getUserIdBySession(String session) {
+        int userId = 0;
+        try {
+            Connection connection = connectionPool.getConnection();
+            getUserId(connection, session, userId);
+            connectionPool.releaseConnection(connection);
+            return userId;
+        } catch (SQLException e) {
+            System.err.println("SQLException in selectUserIdBySessionId: " + e.getMessage());
+        }
+        throw new RuntimeException("No user_Id by that session_id");
+    }
+
+    private int getUserId(Connection connection, String session, int userId) throws SQLException {
+        try(PreparedStatement stmt = connection.prepareStatement("SELECT user_id FROM sessions WHERE session = ?")) {
+            stmt.setString(1, session);
+            return getUserIdFromDatabase(stmt, userId);
+        }
+    }
+
+    private int getUserIdFromDatabase(PreparedStatement stmt, int userId) throws SQLException {
+        try (ResultSet resultSet = stmt.executeQuery()) {
+            while (resultSet.next()) {
+                userId = resultSet.getInt("user_id");
+            }
+        }
+        return userId;
+    }
+
 
 }

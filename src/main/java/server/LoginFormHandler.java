@@ -33,7 +33,13 @@ public class LoginFormHandler implements HttpHandler {
 
         if(cookieStr != null) {
             cookie = HttpCookie.parse(cookieStr).get(0);
-            //handle current session
+            if(sessionDao.isCurrentSession(cookie.getValue())) {
+                response = handleExistingSession(exchange, method, cookieStr, response);
+            } else {
+                response = "<html><body>" +
+                        "<p>Error at existing session<p>" +
+                        "</body></html>";
+            }
         } else {
             response = handleNewSession(exchange, response, method);
         }
@@ -42,6 +48,32 @@ public class LoginFormHandler implements HttpHandler {
         OutputStream outputStream = exchange.getResponseBody();
         outputStream.write(response.getBytes());
         outputStream.close();
+    }
+
+    private String handleExistingSession(HttpExchange exchange, String method, String cookieStr, String response) {
+        HttpCookie cookie = HttpCookie.parse(cookieStr).get(0);
+        cookie.setVersion(1);
+        if (method.equals("GET")) {
+            User user = loginData.getUserById(sessionDao.getUserIdBySession(cookie.getValue()));
+            response = "<html><body>\n" +
+                    "<p>Hello "+ user.getName() +" </p>" +
+                    createLogoutButton() +
+                    "</body></html>";
+        }
+
+        if (method.equals("POST")) {
+            sessionDao.deleteSessionData(cookie.getValue());
+            cookie.setValue("");
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            exchange.getResponseHeaders().add("Set-Cookie", String.format("%s=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0", cookie.toString()));
+            response = "<html><body>\n" +
+                    "Logged out!" +
+                    "    <p>Sign in</p>\n" +
+                    createLoginForm() +
+                    "</body></html>";
+        }
+        return response;
     }
 
     private String handleNewSession(HttpExchange exchange, String response, String method) throws IOException {
@@ -132,7 +164,7 @@ public class LoginFormHandler implements HttpHandler {
     }
 
     private String createLogoutButton() {
-        return  "<form action=\"login\" method=\"GET\">\n" +
+        return  "<form action=\"login\" method=\"POST\">\n" +
                 "    <input type=\"submit\" value=\"Logout\">\n" +
                 "</form>";
     }

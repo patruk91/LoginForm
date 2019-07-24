@@ -7,4 +7,5 @@ public interface ILoginDataDao {
     boolean checkIfPasswordIsCorrect(String login, String password);
     User getUserByLogin(String login);
     String getSaltByLogin(String login);
+    User getUserById(int userIdBySession);
 }

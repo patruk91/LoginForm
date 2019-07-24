@@ -144,4 +144,40 @@ public class LoginDataSQL implements ILoginDataDao {
     }
 
 
+    @Override
+    public User getUserById(int userId) {
+        String query = "";
+        User user = null;
+        try {
+            Connection connection = connectionPool.getConnection();
+            user = getUser(userId, connection, query);
+            connectionPool.releaseConnection(connection);
+            return user;
+        } catch (SQLException e) {
+            System.err.println("SQLException in getUserById: " + e.getMessage());
+        }
+        throw new RuntimeException("No user by that id");
+    }
+
+    private User getUser(int userId, Connection connection, String query) throws SQLException {
+        User user = null;
+        try(PreparedStatement stmt = connection.prepareStatement("SELECT * FROM usercredentials WHERE id = ?")) {
+            stmt.setInt(1, userId);
+            return getUserData(stmt);
+        }
+    }
+
+    private User getUserData(PreparedStatement stmt) throws SQLException {
+        User user = null;
+        try (ResultSet resultSet = stmt.executeQuery()) {
+            while (resultSet.next()) {
+                int userId = resultSet.getInt("user_id");
+                String name = resultSet.getString("name");
+                String type = resultSet.getString("type");
+                return user = new User(userId, name, type);
+            }
+        }
+        throw new IllegalArgumentException("No user in database");
+    }
+
 }
